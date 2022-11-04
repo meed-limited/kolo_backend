@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model projects {
+  id                  Int       @id @default(autoincrement())
+  chainId             Int       @unique(map: "chainId")
+  name                String    @db.VarChar(255)
+  cardImage           String    @db.VarChar(255)
+  tagLine             String    @db.VarChar(255)
+  organizationName    String    @db.VarChar(255)
+  organizationWebsite String    @db.VarChar(255)
+  youtubeLink         String    @db.VarChar(255)
+  contactLastname     String    @db.VarChar(255)
+  contactOthernames   String    @db.VarChar(255)
+  walletAddress       String    @db.VarChar(255)
+  senderAddress       String    @db.VarChar(255)
+  LastUpdatedTime     DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model users {
+  id              Int       @id @default(autoincrement())
+  objectId        String    @unique(map: "objectId") @db.VarChar(255)
+  walletAddress   String    @unique(map: "walletAddress") @db.VarChar(255)
+  adsCount        Int?      @default(0)
+  daoTokenCount   Int?      @default(0)
+  LastUpdatedTime DateTime? @default(now()) @db.Timestamp(0)
+}

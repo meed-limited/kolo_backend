@@ -1,0 +1,8 @@
+
+# Build dependencies
+FROM mysql:latest
+
+ENV MYSQL_ROOT_PASSWORD=root
+
+# it will run the SQL query inside file automatically
+COPY ./schemas/create-table-userinformation.sql /docker-entrypoint-initdb.d/
