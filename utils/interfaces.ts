@@ -17,7 +17,8 @@ export interface Proposal {
 
 export interface Project {
     id?: number;
-    chainId: number;
+    chainId: string;
+    projectId: number;
     name: string;
     cardImage: string;
     tagLine: string;
@@ -28,4 +29,6 @@ export interface Project {
     contactPersonOthernames: string;
     walletAddress: string;
     senderAddress: string;
+    pollId: number;
+    totalVotes?: number;
 }

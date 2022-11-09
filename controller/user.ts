@@ -58,6 +58,25 @@ export const getAdsAndTokenCount = async (req: Request, res: Response, next: Nex
     }
 }
 
+export const submitVote = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { WalletAddress, ProjectId, NumberOfTokensForVote } = req.body;
+
+        if (!WalletAddress || !ProjectId || !NumberOfTokensForVote) {
+            res.status(StatusCodes.BadRequest).json({ success: false, message: 'Wallet address, ProjectId, and NumberOfTokensForVote are required' });
+            return;
+        }
+        
+        const user: User = new User(WalletAddress);
+        const response = await user.castVote(ProjectId, NumberOfTokensForVote);
+
+        res.status(response.code).json({ success: response.success, message: response.message });
+    } catch (err) {
+        next(err);
+    }
+}
+
+
 export const requestTokenTransfer = async(req: Request, res: Response, next: NextFunction) => {
 
     try {
@@ -77,23 +96,7 @@ export const requestTokenTransfer = async(req: Request, res: Response, next: Nex
     }
 }
 
-export const submitVote = async(req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { ObjectId, Sender, ProposalId } = req.body;
-
-        if (!ObjectId || !Sender || !ProposalId) {
-            res.status(StatusCodes.BadRequest).json({ success: false, message: 'The user device id and project sender address, proposal id are required for voting' });
-            return;
-        }
-        
-        const user: User = new User(ObjectId);
-        const response = await user.castVote(Sender, ProposalId);
-
-        res.status(response.code).json({ success: response.success, message: response.message });
-    } catch (err) {
-        next(err);
-    }
-}
+/*
 
 export const getCurrentPoll = async(req: Request, res: Response, next: NextFunction) => {
     try {
@@ -163,3 +166,5 @@ export const yieldKolTokens = async(req: Request, res: Response, next: NextFunct
         next(err);
     }
 }
+
+*/

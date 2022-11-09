@@ -8,7 +8,8 @@ COPY prisma ./prisma/
 COPY .env ./
 COPY tsconfig.json ./
 COPY . . 
-RUN npm i
+CMD rm -rf node_modules
+RUN yarn install
 RUN npx prisma generate
 # Build production image
 FROM dependencies as builder

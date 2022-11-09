@@ -5,7 +5,8 @@ USE kolostore;
 CREATE TABLE
     projects(
         id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-        chainId INT UNIQUE NOT NULL,
+        chainId VARCHAR(255) NOT NULL,
+        projectId INT UNIQUE NOT NULL,
         name VARCHAR(255) NOT NULL,
         cardImage VARCHAR(255) NOT NULL,
         tagLine VARCHAR(255) NOT NULL,
@@ -16,5 +17,6 @@ CREATE TABLE
         contactOthernames VARCHAR(255) NOT NULL,
         walletAddress VARCHAR(255) NOT NULL,
         senderAddress VARCHAR(255) NOT NULL,
+        pollId INT NOT NULL,
         LastUpdatedTime timestamp DEFAULT CURRENT_TIMESTAMP on UPDATE CURRENT_TIMESTAMP
     ) DEFAULT CHARSET UTF8;

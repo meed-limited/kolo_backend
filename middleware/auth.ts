@@ -13,7 +13,7 @@ exports.protect = async (req: Request, res: Response, next: NextFunction) => {
         // get the key from db
         const { WalletAddress } = req.body;
         if (!WalletAddress) {
-            return next(new ErrorResponse('Wasllw', 'User wallet address is missing'));
+            return next(new ErrorResponse('AUTHERROR', 'User wallet address is missing'));
         }
 
         const user = new User(WalletAddress);

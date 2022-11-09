@@ -10,6 +10,7 @@ export async function addNewProject(project: Project): Promise<CustomResponse> {
     const info = await prisma.projects.create({
         data: {
             chainId: project.chainId,
+            projectId: project.projectId,
             name: project.name,
             cardImage: project.cardImage!,
             tagLine: project.tagLine,
@@ -20,6 +21,7 @@ export async function addNewProject(project: Project): Promise<CustomResponse> {
             contactOthernames: project.contactPersonOthernames,
             walletAddress: project.walletAddress,
             senderAddress: project.senderAddress,
+            pollId: project.pollId
         }
     })
 
@@ -98,6 +100,7 @@ export async function getProject(id: number): Promise<CustomResponse> {
 
     const project: Project = {
         id: projectInfo.id,
+        projectId: projectInfo.projectId,
         name: projectInfo.name,
         chainId: projectInfo.chainId,
         cardImage: projectInfo.cardImage,
@@ -109,11 +112,64 @@ export async function getProject(id: number): Promise<CustomResponse> {
         contactPersonOthernames: projectInfo.contactOthernames,
         walletAddress: projectInfo.walletAddress,
         senderAddress: projectInfo.senderAddress,
+        pollId: projectInfo.pollId
     }
 
     response = {
         success: true,
         data: { project },
+        code: StatusCodes.OK
+    }
+
+    return response;
+}
+
+export async function getProjects(pollId: number, projectIds: number[], voteCounts: number[]): Promise<CustomResponse> {
+
+    const projectInfo: any[] = await prisma.projects.findMany({
+        where: {
+            pollId: pollId
+        }
+    });
+    await prisma.$disconnect();
+
+    
+    if  (projectInfo === null || projectInfo.length === 0) {
+        response = {
+            success: false,
+            message: 'No projects submitted for the specified poll id',
+            code: StatusCodes.NotFound
+        }
+        return response;
+    }
+
+    const projects: Project[] = [];
+
+    
+    for (const project of projectInfo) {
+        const index: number = projectIds.indexOf(project.chainId);
+        projects.push({
+            id: project.id,
+            projectId: project.projectId,
+            name: project.name,
+            chainId: project.chainId,
+            cardImage: project.cardImage,
+            tagLine: project.tagLine,
+            organizationName: project.organizationName,
+            organizationWebsite: project.organizationWebsite,
+            youtubeLink: project.youtubeLink,
+            contactPersonLastname: project.contactLastname,
+            contactPersonOthernames: project.contactOthernames,
+            walletAddress: project.walletAddress,
+            senderAddress: project.senderAddress,
+            pollId: project.pollId,
+            totalVotes: voteCounts[index],
+        });
+    }
+
+    response = {
+        success: true,
+        data: { projects },
         code: StatusCodes.OK
     }
 

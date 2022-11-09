@@ -43,6 +43,11 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
         const message = 'Trying to access property of records with invalid id';
         error = new ErrorResponse(err.name, message);
     }
+
+    else if (err.message.includes('chainId')) {
+        const message = 'Trying to save project with already existing chain id';
+        error = new ErrorResponse(err.name, message);
+    }
     
     else {
         error = new ErrorResponse(err.name, err.message);

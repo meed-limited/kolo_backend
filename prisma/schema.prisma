@@ -9,7 +9,8 @@ datasource db {
 
 model projects {
   id                  Int       @id @default(autoincrement())
-  chainId             Int       @unique(map: "chainId")
+  chainId             String    @db.VarChar(255)
+  projectId           Int       @unique(map: "projectId")
   name                String    @db.VarChar(255)
   cardImage           String    @db.VarChar(255)
   tagLine             String    @db.VarChar(255)
@@ -20,6 +21,7 @@ model projects {
   contactOthernames   String    @db.VarChar(255)
   walletAddress       String    @db.VarChar(255)
   senderAddress       String    @db.VarChar(255)
+  pollId              Int
   LastUpdatedTime     DateTime? @default(now()) @db.Timestamp(0)
 }
 

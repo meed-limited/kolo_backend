@@ -1,5 +1,6 @@
 import { CustomResponse, Project } from '../utils/interfaces';
 import { StatusCodes } from '../utils/constants';
+import AWS from 'aws-sdk'
 
 let response: CustomResponse;
 
@@ -30,12 +31,35 @@ export class User {
         return await getAdsTokenCount(walletAddress);
     }
 
-    addProject = async(chainId: number, name: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string): Promise<CustomResponse> => {
+    addProject = async(chainId: string, projectId: number, name: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string): Promise<CustomResponse> => {
+
+        // check if poll is opened
+        const { isAcceptingProjects, getCurrentPoll } = require('./network');
+        {
+            const { success } = await isAcceptingProjects();
+            if (success === false) {
+                response = {
+                    success,
+                    message: 'Not current accepting new project submission',
+                    code: StatusCodes.OK
+                }
+                return response;
+            }
+        }
+
+        const imagePath: any = await this.saveAvartar(cardImage, projectId);
+
+        let pollId = 0;
+        { 
+            const { data } : any= await getCurrentPoll();
+            pollId = data.pollId;
+        }
 
         const newProject: Project = {
             chainId: chainId,
+            projectId: projectId,
             name: name,
-            cardImage: cardImage!,
+            cardImage: imagePath,
             tagLine: tagLine,
             organizationName: orgName,
             organizationWebsite: orgWebsite,
@@ -43,7 +67,8 @@ export class User {
             contactPersonLastname: contactLastname,
             contactPersonOthernames: contactOthernames,
             walletAddress: walletAddress,
-            senderAddress: senderAddress,
+            senderAddress: this.walletAddress,
+            pollId: pollId
         }
 
         const { addNewProject } = require('../model/project_client');
@@ -51,13 +76,16 @@ export class User {
         return await addNewProject(newProject);
     }
 
-    updateProject = async(id: number, chainId: number, name: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string): Promise<CustomResponse> => {
+    updateProject = async(id: number, chainId: string, projectId: number, name: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string, pollId: number): Promise<CustomResponse> => {
+
+        const imagePath: any = await this.saveAvartar(cardImage, projectId);
 
         const newProject: Project = {
             id: id,
             chainId: chainId,
+            projectId: projectId,
             name: name,
-            cardImage: cardImage!,
+            cardImage: imagePath,
             tagLine: tagLine,
             organizationName: orgName,
             organizationWebsite: orgWebsite,
@@ -66,6 +94,7 @@ export class User {
             contactPersonOthernames: contactOthernames,
             walletAddress: walletAddress,
             senderAddress: senderAddress,
+            pollId: pollId,
         }
 
         const { updateProject } = require('../model/project_client');
@@ -81,9 +110,57 @@ export class User {
         return response;
     }
 
+    getProjects = async(pollId: number): Promise<CustomResponse> => {
+
+        const { getPollResult } = require('./network');
+        const { data }: any = await getPollResult(pollId);
+
+        const { getProjects } = require('../model/project_client');
+        const response = await getProjects(pollId, data.projectIds, data.voteCounts);
+
+        return response;
+    }
+
+    castVote = async (projectId: number, amount: number): Promise<CustomResponse> => {
+
+        const { castVote } = require('./network');
+        return await castVote(this.walletAddress, projectId, amount);
+    }
+
+    saveAvartar = async(strStream: string, projectId: number) => {
+
+        const fileStream = Buffer.from(strStream, 'base64');
+
+        const { S3_ACCESSKEYID, S3_SECRETACCESSKEY, S3_BUCKETNAME, S3_AVATAR_DIR} = process.env;
+
+        AWS.config.update({ accessKeyId: S3_ACCESSKEYID, secretAccessKey: S3_SECRETACCESSKEY});
+
+        const s3Bucket = new AWS.S3({ params: { Bucket: S3_BUCKETNAME } });
+
+        const filename: string = `ava_${projectId}.png`;
+        const s3_url = `${S3_AVATAR_DIR}/${filename}`;
+        const data: any = {
+            Key: s3_url,
+            Body: fileStream,
+            ContentEncoding: 'base64',
+            ContentType: 'image/png',
+            ACL: 'public-read'
+        };
+
+        return new Promise((resolve, reject) => {
+            s3Bucket.putObject(data, (err: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(`https://s3.amazonaws.com/${S3_BUCKETNAME}/${S3_AVATAR_DIR}/${filename}`);
+                }
+            });
+        });
+    }
+
     requestTokenTransfer = async(walletAddress: string): Promise<CustomResponse> => {
-        const { getTokenCount, resetTokenCount } = require('../model/user_client');
-        const response = await getTokenCount(this.walletAddress);
+        const { getAdsTokenCount, resetTokenCount } = require('../model/user_client');
+        const response = await getAdsTokenCount(this.walletAddress);
         if (response.success === false) {
             return response;
         }
@@ -98,8 +175,11 @@ export class User {
         return await transferKOL(walletAddress, amount);
 
     }
+
+    // Remove below segments if not needed
+
 /*
-    submitProposal = async(sender: string, title: string, description: string, accountNumber: string): Promise<CustomResponse> => {
+    submitProject = async(sender: string, title: string, description: string, accountNumber: string): Promise<CustomResponse> => {
         const { getTokenCount, resetTokenCount } = require('../model/user_client');
         response = await getTokenCount(this.walletAddress);
         if (response.success === false) {
@@ -113,19 +193,19 @@ export class User {
         if (amount < fee) {
             response = {
                 success: false,
-                message: 'Proposal failed to submit due to insufficient token count for fee payment',
+                message: 'Project failed to submit due to insufficient token count for fee payment',
                 code: StatusCodes.BadRequest
             }
             return response;
         }
 
-        const { submitProposal, isAcceptingProposals } = require('./network')
+        const { submitProject, isAcceptingProjects } = require('./network')
 
-        const { success } = await isAcceptingProposals();
+        const { success } = await isAcceptingProjects();
         if (success === false) {
             response = { 
                 success: false,
-                message: 'Contract on chain is not presently accepting proposal',
+                message: 'Contract on chain is not presently accepting Project',
                 code: StatusCodes.InternalError
             }
             return response;
@@ -134,15 +214,10 @@ export class User {
         // reset the user token count to 0
         await resetTokenCount(this.walletAddress, fee);
 
-        return await submitProposal(sender, title, description, accountNumber);
+        return await submitProject(sender, title, description, accountNumber);
     }
 */
 
-    castVote = async (sender: string, proposalId: number): Promise<CustomResponse> => {
-
-        const { castVote } = require('./network');
-        return await castVote(sender, proposalId);
-    }
 
     getCurrentPoll = async (): Promise<CustomResponse> => {
 
@@ -150,15 +225,15 @@ export class User {
         return await getCurrentPoll();
     }
 
-    getCurrentProposals = async (pollId: number): Promise<CustomResponse> => {
+    getCurrentProjects = async (pollId: number): Promise<CustomResponse> => {
 
-        const { getCurrentProposals } = require('./network');
-        return await getCurrentProposals(pollId);
+        const { getCurrentProjects } = require('./network');
+        return await getCurrentProjects(pollId);
     }
 
-    getOneProposal = async (pollId: number, proposalId: number): Promise<CustomResponse> => {
+    getOneProject = async (pollId: number, ProjectId: number): Promise<CustomResponse> => {
 
-        const { getOneProposal } = require('./network');
-        return await getOneProposal(pollId, proposalId);
+        const { getOneProject } = require('./network');
+        return await getOneProject(pollId, ProjectId);
     }
 }

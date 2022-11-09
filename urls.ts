@@ -21,7 +21,8 @@ const {
 const {
     addNewProject,
     editProject,
-    getProject
+    getProject,
+    getProjects,
 } = require('./controller/project');
 
 const {
@@ -34,6 +35,7 @@ router.post('/users/auth', getUserAuthorization);
 router.post('/projects/', addNewProject);
 router.put('/projects/', editProject);
 router.post('/projects/one', getProject);
+router.post('/projects/all', getProjects);
 
 // router.post('/user', createUser);
 router.post('/users/adscount', protect, increaseAdsCount);
@@ -42,11 +44,13 @@ router.post('/users/adstokencount', protect, getAdsAndTokenCount);
 router.post('/users/token/transfer', protect, requestTokenTransfer);
 
 router.post('/users/poll/vote', protect, submitVote);
-router.post('/users/poll/current', protect, getCurrentPoll);
-router.post('/users/poll/proposals', protect, getCurrentProposals);
-router.post('/users/poll/proposal', getOneProposal, getCurrentProposals);
 
-router.post('/exchange/rate', getRate);
-router.post('/exchange/coin/send', sendCoin);
+
+// router.post('/users/poll/current', protect, getCurrentPoll);
+// router.post('/users/poll/proposals', protect, getCurrentProposals);
+// router.post('/users/poll/proposal', getOneProposal, getCurrentProposals);
+
+// router.post('/exchange/rate', getRate);
+// router.post('/exchange/coin/send', sendCoin);
 
 export = { router };

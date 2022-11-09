@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { CustomResponse } from '../utils/interfaces';
 import { StatusCodes } from '../utils/constants';
-import { AxelarQueryAPIConfig, AxelarQueryAPI, Environment } from '@axelar-network/axelarjs-sdk';
+// npm i @axelar-network/axelarjs-sdk": "^0.11.",
+// import { AxelarQueryAPIConfig, AxelarQueryAPI, Environment } from '@axelar-network/axelarjs-sdk';
 
 let response: CustomResponse = { success: false, code: StatusCodes.BadRequest}
 
@@ -39,6 +40,7 @@ export const swapCoins = async (req: Request, res: Response, next: NextFunction)
     }
 }
 
+/*
 export const sendCoin = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const sdk = new AxelarQueryAPI({
@@ -57,3 +59,4 @@ export const sendCoin = async (req: Request, res: Response, next: NextFunction) 
         next(err);
     }
 }
+*/

@@ -8,22 +8,23 @@ let response: CustomResponse = { success: false, code: StatusCodes.BadRequest}
 export const addNewProject = async(req: Request, res: Response, next: NextFunction) => {
     try {
 
+        // console.log(JSON.stringify(req.body));
         const {
-            DeviceId, ChainId, // chainId is chain proposalId
+            SenderAddress, ChainId, ProjectId, // chainId is chain proposalId
             ProjectName, ProjectCardImage, ProjectTagLine,
             OrganizationName, OrganizationWebsite, YoutubeLink,
             ContactPersonLastname, ContactPersonOthernames,
-            WalletAddress, SenderAddress
+            WalletAddress
 
         } = req.body;
 
-        if (!DeviceId || !ChainId || !ProjectName || !ProjectCardImage || !ProjectTagLine || !OrganizationName || !OrganizationWebsite || !YoutubeLink || !ContactPersonLastname || !ContactPersonOthernames ||!WalletAddress) {
+        if (!SenderAddress || !ChainId || !ProjectId || !ProjectName || !ProjectCardImage || !ProjectTagLine || !OrganizationName || !OrganizationWebsite || !YoutubeLink || !ContactPersonLastname || !ContactPersonOthernames ||!WalletAddress) {
             res.status(StatusCodes.BadRequest).json({ success: false, message: 'Some of the required fields for project submission are missing' });
             return;
         }
 
-        const user: User = new User(DeviceId);
-        const response = await user.addProject(ChainId, ProjectName, ProjectCardImage, ProjectTagLine, OrganizationName, OrganizationWebsite, YoutubeLink, ContactPersonLastname, ContactPersonOthernames, WalletAddress, SenderAddress);
+        const user: User = new User(SenderAddress);
+        const response = await user.addProject(ChainId, ProjectId, ProjectName, ProjectCardImage, ProjectTagLine, OrganizationName, OrganizationWebsite, YoutubeLink, ContactPersonLastname, ContactPersonOthernames, WalletAddress);
 
         res.status(response.code).json({ success: response.success, message: response.message });
 
@@ -36,21 +37,21 @@ export const editProject = async(req: Request, res: Response, next: NextFunction
     try {
 
         const {
-            DeviceId, Id, ChainId,
+            Id, ChainId, ProjectId,
             ProjectName, ProjectCardImage, ProjectTagLine,
             OrganizationName, OrganizationWebsite, YoutubeLink,
             ContactPersonLastname, ContactPersonOthernames,
-            WalletAddress, SenderAddress
+            WalletAddress, SenderAddress, PollId
 
         } = req.body;
 
-        if (!DeviceId || !Id || !ChainId || !ProjectName || !ProjectCardImage || !ProjectTagLine || !OrganizationName || !OrganizationWebsite || !YoutubeLink || !ContactPersonLastname || !ContactPersonOthernames ||!WalletAddress) {
+        if (!WalletAddress || !Id || !ChainId || !ProjectId || !ProjectName || !ProjectCardImage || !ProjectTagLine || !OrganizationName || !OrganizationWebsite || !YoutubeLink || !ContactPersonLastname || !ContactPersonOthernames ||!WalletAddress || !PollId) {
             res.status(StatusCodes.BadRequest).json({ success: false, message: 'Some of the required fields for updating projects are missing' });
             return;
         }
 
-        const user: User = new User(DeviceId);
-        const response = await user.updateProject(Id, ChainId, ProjectName, ProjectCardImage, ProjectTagLine, OrganizationName, OrganizationWebsite, YoutubeLink, ContactPersonLastname, ContactPersonOthernames, WalletAddress, SenderAddress);
+        const user: User = new User(WalletAddress);
+        const response = await user.updateProject(Id, ChainId, ProjectId, ProjectName, ProjectCardImage, ProjectTagLine, OrganizationName, OrganizationWebsite, YoutubeLink, ContactPersonLastname, ContactPersonOthernames, WalletAddress, SenderAddress, PollId);
 
         res.status(response.code).json({ success: response.success, message: response.message });
 
@@ -63,17 +64,39 @@ export const getProject = async(req: Request, res: Response, next: NextFunction)
     try {
 
         const {
-            DeviceId, Id
+            Id
 
         } = req.body;
 
-        if (!DeviceId || !Id) {
+        if (!Id) {
             res.status(StatusCodes.BadRequest).json({ success: false, message: 'Some of the required fields to fectch project is missing' });
             return;
         }
 
-        const user: User = new User(DeviceId);
+        const user: User = new User('');
         const response = await user.getProject(Id);
+
+        res.status(response.code).json({ success: response.success, message: response.message, data: response.data });
+
+    } catch (err) {
+        next(err);
+    }
+}
+
+export const getProjects = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        const {
+            PollId
+        } = req.body;
+
+        if (!PollId) {
+            res.status(StatusCodes.BadRequest).json({ success: false, message: 'Some of the required fields to fetch project is missing' });
+            return;
+        }
+
+        const user: User = new User('');
+        const response = await user.getProjects(PollId);
 
         res.status(response.code).json({ success: response.success, message: response.message, data: response.data });
 
