@@ -19,15 +19,18 @@ export const getCoinRate = async (desiredCurrency: string): Promise<CustomRespon
 
     const contractsAddress: any = {
         BTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-        USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        MATIC: '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
         ETH: '0x2170ed0880ac9a755fd29b2688956bd959f933f8',
         BNB: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
     };
 
     const exchanges: any = {
         BTC: 'uniswap_v2',
-        USDT: 'uniswap_v2',
+        USDC: 'uniswap_v2',
+        MATIC: 'uniswap_v2',
         ETH: 'pancakeswap_v2',
+        BNB: 'pancakeswap_v2',
     }; 
     
     const coinAddress: string = contractsAddress[desiredCurrency];
@@ -47,6 +50,8 @@ export const getCoinRate = async (desiredCurrency: string): Promise<CustomRespon
         quoteRate = result[0].token_0.quote_rate;
     } else if (result[0].token_1.contract_address === contractsAddress[desiredCurrency]) {
         quoteRate = result[0].token_1.quote_rate;
+    } else if (desiredCurrency === 'MATIC') {
+        quoteRate = result[0].token_0.quote_rate;
     } else {
         const itemsCount: number = result.length;
         const itemStr: string = JSON.stringify(result);
@@ -61,7 +66,7 @@ export const getCoinRate = async (desiredCurrency: string): Promise<CustomRespon
 
     console.log(quoteRate);
 
-    response = { success: true, data: {result}, code: StatusCodes.OK };
+    response = { success: true, data: {quoteRate}, code: StatusCodes.OK };
 
     // console.log(`result: ${JSON.stringify(result)}`);
 

@@ -31,7 +31,7 @@ export class User {
         return await getAdsTokenCount(walletAddress);
     }
 
-    addProject = async(chainId: string, projectId: number, name: string, amountRequired: number, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string): Promise<CustomResponse> => {
+    addProject = async(chainId: string, projectId: number, name: string, amountRequired: number, desiredCurrency: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string): Promise<CustomResponse> => {
 
         // check if poll is opened
         const { isAcceptingProjects, getCurrentPoll } = require('./network');
@@ -60,6 +60,7 @@ export class User {
             projectId: projectId,
             name: name,
             amountRequired: amountRequired,
+            desiredCurrency: desiredCurrency,
             cardImage: imagePath,
             tagLine: tagLine,
             organizationName: orgName,
@@ -77,7 +78,7 @@ export class User {
         return await addNewProject(newProject);
     }
 
-    updateProject = async(id: number, chainId: string, projectId: number, name: string, amountRequired: number, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string, pollId: number): Promise<CustomResponse> => {
+    updateProject = async(id: number, chainId: string, projectId: number, name: string, amountRequired: number, desiredCurrency: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string, pollId: number): Promise<CustomResponse> => {
 
         const imagePath: any = await this.saveAvartar(cardImage, projectId);
 
@@ -87,6 +88,7 @@ export class User {
             projectId: projectId,
             name: name,
             amountRequired: amountRequired,
+            desiredCurrency: desiredCurrency,
             cardImage: imagePath,
             tagLine: tagLine,
             organizationName: orgName,
@@ -114,11 +116,18 @@ export class User {
 
     getProjects = async(pollId: number): Promise<CustomResponse> => {
 
-        const { getPollResult } = require('./network');
-        const { data }: any = await getPollResult(pollId);
+        const { getCurrentProjects, getVoteCount } = require('./network');
+        let { data } = await getCurrentProjects(pollId);
+        const projectIds: number[] = data.projectIds;
+        
+        const votes: number[] = [];
+        for (const id of projectIds) {
+            const { data } = await getVoteCount(id)
+            votes.push(data.totalVote);
+        }
 
         const { getProjects } = require('../model/project_client');
-        const response = await getProjects(pollId, data.projectIds, data.voteCounts);
+        response = await getProjects(pollId, projectIds, votes);
 
         return response;
     }

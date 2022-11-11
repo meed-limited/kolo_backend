@@ -60,12 +60,10 @@ export async function validateSignature(walletAddress: string, amountOfTokens: n
 
     const contractWithSigner = contract.connect(wallet);
 
-    const formattedAmount: any = ethers.utils.parseEther(amountOfTokens.toString());
-
-    const tx = await contractWithSigner.permit(walletAddress, spender, formattedAmount, Deadline, Vsig, Rsig, Ssig, {
-        gasLimit: 300000,
-        nonce
-    });
+    // const formattedAmount: any = ethers.utils.parseEther(amountOfTokens.toString());
+    // console.log(amountOfTokens, formattedAmount);
+    // return response;
+    const tx = await contractWithSigner.permit(walletAddress, spender, amountOfTokens, Deadline, Vsig, Rsig, Ssig);
 
     await tx.wait();
     const hash: string = tx.hash;
@@ -194,16 +192,25 @@ export async function getCurrentPoll(): Promise<CustomResponse> {
     return response;
 }
 
-export async function getPollResult(pollId: number): Promise<CustomResponse> {
-    console.log(`pollId: ${pollId}`);
+export async function getCurrentProjects(pollId: number): Promise<CustomResponse> {
     const contract: any = await getBallotContract();
-    const results: any[] = await contract.getPollResult(pollId);
-    const projectIds: number[] = results[0].map((x: any) => parseInt(x));
-    const voteCounts: number[] = results[1].map((x: any) => parseInt(x));
-    console.log(projectIds, voteCounts);
+    const projects: string[] = await contract.getProjects(pollId);
+    const projectIds: number[] = projects.map(x => parseInt(x));
     response = {
         success: true,
-        data: { projectIds, voteCounts },
+        data: { projectIds },
+        code: StatusCodes.OK
+    }
+
+    return response;
+}
+
+export async function getVoteCount(projectId: number): Promise<CustomResponse> {
+    const contract: any = await getBallotContract();
+    const totalVote: string = await contract.getVoteCount(projectId);
+    response = {
+        success: true,
+        data: { totalVote: parseInt(totalVote) },
         code: StatusCodes.OK
     }
 

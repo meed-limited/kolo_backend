@@ -15,7 +15,7 @@ export const getRate = async (req: Request, res: Response, next: NextFunction) =
             return;
         }
 
-        if (['USDT', 'BTC', 'ETH', 'BNB', 'MATIC', 'SOL'].indexOf(CurrencyDesired.toUpperCase()) === -1) {
+        if (['USDC', 'BTC', 'ETH', 'BNB', 'MATIC'].indexOf(CurrencyDesired.toUpperCase()) === -1) {
             response.message = 'Currency not supported. Only USDT, BTC, ETH, BNB, MATIC, SOL are supported';
             res.status(response.code).json( { success: response.success, message: response.message } );
             return;

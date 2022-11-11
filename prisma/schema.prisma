@@ -13,6 +13,7 @@ model projects {
   projectId           Int       @unique(map: "projectId")
   name                String    @db.VarChar(255)
   amountRequired      Int
+  desiredCurrency     String    @db.VarChar(255)
   cardImage           String    @db.VarChar(255)
   tagLine             String    @db.VarChar(255)
   organizationName    String    @db.VarChar(255)

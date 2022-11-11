@@ -21,6 +21,7 @@ export interface Project {
     projectId: number;
     name: string;
     amountRequired: number;
+    desiredCurrency: string;
     cardImage: string;
     tagLine: string;
     organizationName: string;

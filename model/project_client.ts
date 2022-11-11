@@ -13,6 +13,7 @@ export async function addNewProject(project: Project): Promise<CustomResponse> {
             projectId: project.projectId,
             name: project.name,
             amountRequired: project.amountRequired,
+            desiredCurrency: project.desiredCurrency,
             cardImage: project.cardImage!,
             tagLine: project.tagLine,
             organizationName: project.organizationName,
@@ -48,6 +49,7 @@ export async function updateProject(project: Project): Promise<CustomResponse> {
         data: {
             name: project.name,
             amountRequired: project.amountRequired,
+            desiredCurrency: project.desiredCurrency,
             // chainId: project.chainId, // modification not allowed
             cardImage: project.cardImage!,
             tagLine: project.tagLine,
@@ -105,6 +107,7 @@ export async function getProject(id: number): Promise<CustomResponse> {
         projectId: projectInfo.projectId,
         name: projectInfo.name,
         amountRequired: projectInfo.amountRequired,
+        desiredCurrency: projectInfo.desiredCurrency,
         chainId: projectInfo.chainId,
         cardImage: projectInfo.cardImage,
         tagLine: projectInfo.tagLine,
@@ -156,6 +159,7 @@ export async function getProjects(pollId: number, projectIds: number[], voteCoun
             projectId: project.projectId,
             name: project.name,
             amountRequired: project.amountRequired,
+            desiredCurrency: project.desiredCurrency,
             chainId: project.chainId,
             cardImage: project.cardImage,
             tagLine: project.tagLine,

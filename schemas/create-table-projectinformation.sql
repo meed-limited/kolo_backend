@@ -9,6 +9,7 @@ CREATE TABLE
         projectId INT UNIQUE NOT NULL,
         name VARCHAR(255) NOT NULL,
         amountRequired INT NOT NULL,
+        desiredCurrency VARCHAR(255) NOT NULL,
         cardImage VARCHAR(255) NOT NULL,
         tagLine VARCHAR(255) NOT NULL,
         organizationName VARCHAR(255) NOT NULL,
