@@ -20,6 +20,7 @@ export interface Project {
     chainId: string;
     projectId: number;
     name: string;
+    amountRequired: number;
     cardImage: string;
     tagLine: string;
     organizationName: string;

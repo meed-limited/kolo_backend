@@ -46,6 +46,30 @@ exports.protect = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+// Protect routes
+exports.protectAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    let token: string = '';
+
+    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
+    // Make sure token exists
+    if(token === '') {
+        return next(new ErrorResponse('AUTHMISSING', 'Not authorized to access this resource'));
+    }
+
+    try {
+        const secretKey: any = process.env.SECRET_KEY;
+        jwt.verify(token, secretKey, (err: Error | null, decoded: any) => {
+            if (err) return next(err)
+            if (decoded) next();
+        });
+    } catch (err) {
+        return next(err);
+    }
+};
+
 export async function generateToken(walletAddress: string, objectId: string): Promise<CustomResponse> {
 
     // store sthe secret key in the db and process if successful

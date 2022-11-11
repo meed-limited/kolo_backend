@@ -4,15 +4,16 @@
 FROM node:alpine as dependencies
 WORKDIR /app
 COPY package.json .
+COPY dist ./dist/
 COPY prisma ./prisma/
 COPY .env ./
 COPY tsconfig.json ./
-COPY . . 
+# COPY . . 
 CMD rm -rf node_modules
 RUN yarn install
 RUN npx prisma generate
 # Build production image
 FROM dependencies as builder
-RUN npm run build
+# RUN npm run build
 EXPOSE 3000
 CMD npm run start

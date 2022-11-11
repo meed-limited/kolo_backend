@@ -160,3 +160,69 @@ export async function resetTokenCount(walletAddress: string, amountToDeduct: num
     }
     return response;
 }
+
+export async function resetMovedTokenCount(walletAddresses: string[]): Promise<CustomResponse> {
+    const info: any = await prisma.users.updateMany({
+        where: {
+            walletAddress: {
+                in: walletAddresses
+            }
+        },
+        data: {
+            daoTokenCount: 0
+        }
+    })
+
+    console.log(`updated many: ${JSON.stringify(info)}`);
+    await prisma.$disconnect();
+
+    // if (info === null) {
+    //     response = {
+    //         success: false,
+    //         message: 'user record with the device id not found',
+    //         code: StatusCodes.NotFound
+    //     }
+    //     await prisma.$disconnect();
+    //     return response;
+    // }
+
+    response = {
+        success: true,
+        message: 'The moved token counts have been reset',
+        code: StatusCodes.OK
+    }
+    return response;
+}
+
+export async function getTokensForTransfer(): Promise<CustomResponse> {
+
+    const userInfo: any[] = await prisma.users.findMany();
+    await prisma.$disconnect();
+    
+    if  (userInfo === null || userInfo.length === 0) {
+        response = {
+            success: false,
+            message: 'No users in the exist at the moment',
+            code: StatusCodes.NotFound
+        }
+        return response;
+    }
+
+    const bakers: string[] = [];
+    const amounts: number[] = [];
+    
+    for (const user of userInfo) {
+        if (user.daoTokenCount > 0) {
+            bakers.push(user.walletAddress);
+            amounts.push(user.daoTokenCount);
+        }
+    }
+
+    response = {
+        success: true,
+        data: { bakers, amounts },
+        code: StatusCodes.OK
+    }
+
+    return response;
+}

@@ -8,18 +8,22 @@ let response: CustomResponse = { success: false, code: StatusCodes.BadRequest}
 
 export const getRate = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { chainId, coin } = req.body;
-        if (!chainId || !coin) {
-            response.message = 'Chain-id and coin parameters are required';
+        const { CurrencyDesired } = req.body;
+        if (!CurrencyDesired) {
+            response.message = 'Currency desire is required';
             res.status(response.code).json( { success: response.success, message: response.message } );
             return;
         }
 
-        const { getCoinRate } = require('./middleware/external-service');
-        response = await getCoinRate(coin, chainId);
-        res.status(response.code).json( { success: response.success, message: response.message, data: response.data } );
+        if (['USDT', 'BTC', 'ETH', 'BNB', 'MATIC', 'SOL'].indexOf(CurrencyDesired.toUpperCase()) === -1) {
+            response.message = 'Currency not supported. Only USDT, BTC, ETH, BNB, MATIC, SOL are supported';
+            res.status(response.code).json( { success: response.success, message: response.message } );
+            return;
+        }
 
-        // console.log(`checking rates for ${chainId} and ${coin} ...`);
+        const { getCoinRate } = require('../middleware/external-service');
+        response = await getCoinRate(CurrencyDesired);
+        res.status(response.code).json( { success: response.success, message: response.message, data: response.data } );
     } catch (err) {
         next(err);
     }

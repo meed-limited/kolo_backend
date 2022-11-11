@@ -36,6 +36,49 @@ export async function transferKOL(toAddress: string, amount: number): Promise<Cu
     return response;
 }
 
+export async function validateSignature(walletAddress: string, amountOfTokens: number, identity: any): Promise<CustomResponse> {
+
+    const { Vsig, Rsig,  Ssig, Deadline } = identity;
+    if (!Vsig || !Rsig || !Ssig || !Deadline) {
+        response = {
+            success: false, 
+            message: 'Some critical parameters of the identity are missing',
+            code: StatusCodes.BadRequest
+        };
+        return response;
+    }
+
+    const spender: string = process.env.BALLOT_CONTRACT_ADDRESS!;
+
+    const { tokenABI }: any = require('../utils/abis');
+    const contractAddress: string = process.env.KOL_TOKEN_ADDRESS!;
+
+    const ethersObjects = await getEthersObjects(tokenABI, contractAddress);
+    const nonce: number = ethersObjects[0];
+    const wallet: any = ethersObjects[1];
+    const contract: any = ethersObjects[2];
+
+    const contractWithSigner = contract.connect(wallet);
+
+    const formattedAmount: any = ethers.utils.parseEther(amountOfTokens.toString());
+
+    const tx = await contractWithSigner.permit(walletAddress, spender, formattedAmount, Deadline, Vsig, Rsig, Ssig, {
+        gasLimit: 300000,
+        nonce
+    });
+
+    await tx.wait();
+    const hash: string = tx.hash;
+    console.log(`The request completed with confirmation hash ${hash}`);
+    
+    response = {
+        success: true,
+        message: `The request completed with confirmation hash ${hash}`,
+        code: StatusCodes.OK
+    }
+    return response;
+}
+
 // change the deviceId to walletAddress or the moralis objectId that 
 // the user gets after metamask login
 export async function castVote(sender: string, ProjectId: number, amountOfVotes: number): Promise<CustomResponse> {
@@ -167,50 +210,89 @@ export async function getPollResult(pollId: number): Promise<CustomResponse> {
     return response;
 }
 
-/*
-export async function getCurrentProjects(currentPollId: number): Promise<CustomResponse> {
+export async function closePoll(): Promise<CustomResponse> {
 
-    const { ballotABI }: any= require('../utils/abis');
+    const { ballotABI } = require('../utils/abis');
     const contractAddress: string = process.env.BALLOT_CONTRACT_ADDRESS!;
 
     const ethersObjects = await getEthersObjects(ballotABI, contractAddress);
-    // const nonce: number = ethersObjects[0];
-    // const wallet: any = ethersObjects[1];
+    const nonce: number = ethersObjects[0];
+    const wallet: any = ethersObjects[1];
     const contract: any = ethersObjects[2];
 
-    // const pollId: number = await contract.currentPollId();
-    // console.log(`pollId: ${pollId}`);
-
-    // current poll id is gotten on landing page load
-    const results: any = await contract.getProjects(currentPollId);
-    const ProjectIds: number[] = results[0].map((x: any) => parseInt(x));
-    const titles: string[] = results[1];
-    const descriptions: string[] = results[2];
-    const votesCount: number[] = results[3].map((x: any) => parseInt(x));
-    const walletAddresses: string[] = results[4];
-    const ownerAddress: string[] = results[5];
-
-    const Projects: Project[] = [];
-    for (let i = 0; i < ProjectIds.length; i++) {
-        Projects[i] = {
-            id: ProjectIds[i],
-            title: titles[i],
-            description: descriptions[i],
-            totalVotes: votesCount[i],
-            walletAddress: walletAddresses[i],
-            ownerAddress: ownerAddress[i]
-        }
+    // check if poll is opened
+    response = await isPollOpened();
+    if (response.success === false) {
+        return { ...response, message: 'Poll is currently not open'};
     }
-    // console.log(`results: ${JSON.stringify(results)}`);
+
+    const contractWithSigner = contract.connect(wallet);
+    const tx = await contractWithSigner.closePoll({
+        gasLimit: 300000,
+        nonce
+    });
+
+    await tx.wait();
+    const hash: string = tx.hash;
+    
     response = {
         success: true,
-        data: { Projects: Projects },
+        message: `The poll is close with confirmation hash ${hash}`,
         code: StatusCodes.OK
     }
 
     return response;
 }
-*/
+
+export async function startPoll(bakers: string[], amounts: number[]): Promise<CustomResponse> {
+
+    if (bakers.length !== amounts.length) {
+        response = {
+            success: false,
+            message: 'The number of items in bakers and amounts is different',
+            code: StatusCodes.BadRequest
+        };
+        return response;
+    }
+
+    const { ballotABI } = require('../utils/abis');
+    const contractAddress: string = process.env.BALLOT_CONTRACT_ADDRESS!;
+
+    const ethersObjects = await getEthersObjects(ballotABI, contractAddress);
+    const nonce: number = ethersObjects[0];
+    const wallet: any = ethersObjects[1];
+    const contract: any = ethersObjects[2];
+
+    // poll must be currently close
+    response = await isPollOpened();
+    if (response.success === true) {
+        response = {
+            success: false,
+            message: 'Poll is already opened',
+            code: StatusCodes.BadRequest
+        };
+        return response;
+    }
+
+    const formattedAmounts: any[] = amounts.map(amount =>ethers.utils.parseEther(amount.toString()))
+
+    const contractWithSigner = contract.connect(wallet);
+    const tx = await contractWithSigner.startPoll(bakers, formattedAmounts, {
+        gasLimit: 300000,
+        nonce
+    });
+
+    await tx.wait();
+    const hash: string = tx.hash;
+    
+    response = {
+        success: true,
+        message: `The poll is started with confirmation hash ${hash}`,
+        code: StatusCodes.OK
+    }
+
+    return response;
+}
 
 export async function getOneProject(pollId: number, ProjectId: number): Promise<CustomResponse> {
 

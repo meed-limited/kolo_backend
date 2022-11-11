@@ -31,7 +31,7 @@ export class User {
         return await getAdsTokenCount(walletAddress);
     }
 
-    addProject = async(chainId: string, projectId: number, name: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string): Promise<CustomResponse> => {
+    addProject = async(chainId: string, projectId: number, name: string, amountRequired: number, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string): Promise<CustomResponse> => {
 
         // check if poll is opened
         const { isAcceptingProjects, getCurrentPoll } = require('./network');
@@ -59,6 +59,7 @@ export class User {
             chainId: chainId,
             projectId: projectId,
             name: name,
+            amountRequired: amountRequired,
             cardImage: imagePath,
             tagLine: tagLine,
             organizationName: orgName,
@@ -76,7 +77,7 @@ export class User {
         return await addNewProject(newProject);
     }
 
-    updateProject = async(id: number, chainId: string, projectId: number, name: string, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string, pollId: number): Promise<CustomResponse> => {
+    updateProject = async(id: number, chainId: string, projectId: number, name: string, amountRequired: number, cardImage: string, tagLine: string, orgName: string, orgWebsite: string, youtubeLink: string, contactLastname: string, contactOthernames: string, walletAddress: string, senderAddress: string, pollId: number): Promise<CustomResponse> => {
 
         const imagePath: any = await this.saveAvartar(cardImage, projectId);
 
@@ -85,6 +86,7 @@ export class User {
             chainId: chainId,
             projectId: projectId,
             name: name,
+            amountRequired: amountRequired,
             cardImage: imagePath,
             tagLine: tagLine,
             organizationName: orgName,
@@ -119,6 +121,11 @@ export class User {
         const response = await getProjects(pollId, data.projectIds, data.voteCounts);
 
         return response;
+    }
+
+    validateSignature = async(amountOfTokens: number, identity: any): Promise<CustomResponse> => {
+        const { validateSignature } = require('./network');
+        return await validateSignature(this.walletAddress, amountOfTokens, identity);
     }
 
     castVote = async (projectId: number, amount: number): Promise<CustomResponse> => {
@@ -174,6 +181,92 @@ export class User {
         const { transferKOL } = require('./network');
         return await transferKOL(walletAddress, amount);
 
+    }
+
+    startPoll = async(): Promise<CustomResponse> => {
+
+        if (this.walletAddress !== 'adm1nk0l0') {
+            response = {
+                success: false,
+                message: 'Invalid admin id',
+                code: StatusCodes.BadRequest
+            };
+            return response;
+        }
+        
+        // gets bakers and amount
+        const { getTokensForTransfer, resetMovedTokenCount } = require('../model/user_client');
+        response = await getTokensForTransfer();
+        if (response.success = false) {
+            return response;
+        }
+
+        const data: any = response.data;
+        console.log(`Get token for transfer successful: Sending tokens to ${data.bakers.length} users`);
+
+        if (data.bakers.length === 0) {
+            response = {
+                success: false,
+                message: 'No user with in-game tokens',
+                code: StatusCodes.OK
+            }
+            return response;
+        }
+
+        // stop if there is an existing opened poll
+        const { isPollOpened } = require('./network');
+        response = await isPollOpened();
+        if (response.success === true) {
+            console.log(`Another poll is currently opened`);
+            return { ...response, message: 'One poll is currently opened'};
+        }
+
+        // get the total amount and transfer it from owner to ballo contract
+        const contractAddress: string = process.env.BALLOT_CONTRACT_ADDRESS!;
+        const totalAmountRequired: number = data.amounts.reduce((totalAmount: number, amount: number) => totalAmount + amount, 0);
+
+        const { transferKOL } = require('./network');
+        response = await transferKOL(contractAddress, totalAmountRequired);
+        if (response.success === false) {
+            return response;
+        }
+        console.log(`${totalAmountRequired} KOLs transfer to contract complete`);
+        
+        // batch transfer tokens and start poll
+        const { startPoll } = require('./network');
+        response = await startPoll(data.bakers, data.amounts);
+        console.log(`batch transfer and poll process started: ${data.bakers} - ${data.amounts}`);
+
+        if (response.success === true) {
+            // reset all users token counts
+            response = await resetMovedTokenCount(data.bakers);
+            if (response.success === false) {
+                return response;
+            }
+        }
+        console.log('batch transfer complete and poll started');
+
+        response = {
+            success: true,
+            message: 'KOL paid out successfully and poll started',
+            code: StatusCodes.OK
+        }
+        return response;
+    }
+
+    closePoll = async(): Promise<CustomResponse> => {
+
+        if (this.walletAddress !== 'adm1nk0l0') {
+            response = {
+                success: false,
+                message: 'Invalid admin id',
+                code: StatusCodes.BadRequest
+            };
+            return response;
+        }
+
+        const { closePoll } = require('./network');
+        return await closePoll();
     }
 
     // Remove below segments if not needed

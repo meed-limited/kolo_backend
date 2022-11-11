@@ -1,108 +1,104 @@
-import { Request, Response, NextFunction } from 'express';
-import { CustomResponse } from '../utils/interfaces';
-import { StatusCodes } from '../utils/constants';
-import { User } from '../middleware/user';
-import { poll } from 'ethers/lib/utils';
-
-let response: CustomResponse = { success: false, code: StatusCodes.BadRequest}
-
-export const getUserAuthorization = async (req: Request, res: Response, next: NextFunction) => {
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.requestTokenTransfer = exports.submitVote = exports.getAdsAndTokenCount = exports.increaseAdsCount = exports.getUserAuthorization = void 0;
+const constants_1 = require("../utils/constants");
+const user_1 = require("../middleware/user");
+let response = { success: false, code: constants_1.StatusCodes.BadRequest };
+const getUserAuthorization = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { ObjectId, WalletAddress } = req.body;
         if (!ObjectId || !WalletAddress || ObjectId === '' || WalletAddress === '') {
-            res.status(StatusCodes.BadRequest).json({ success: false, message: 'The required object id and/or wallet address is missing.' });
+            res.status(constants_1.StatusCodes.BadRequest).json({ success: false, message: 'The required object id and/or wallet address is missing.' });
             return;
         }
-
         const { generateToken } = require('../middleware/auth');
-        response = await generateToken(WalletAddress, ObjectId);
-
+        response = yield generateToken(WalletAddress, ObjectId);
         res.status(response.code).json({ success: response.success, data: response.data });
-    } catch (err) {
+    }
+    catch (err) {
         next(err);
     }
-}
-
-export const increaseAdsCount = async(req: Request, res: Response, next: NextFunction) => {
-
+});
+exports.getUserAuthorization = getUserAuthorization;
+const increaseAdsCount = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { WalletAddress } = req.body;
         if (!WalletAddress) {
-            res.status(StatusCodes.BadRequest).json({ success: false, message: 'Wallet address is required' });
+            res.status(constants_1.StatusCodes.BadRequest).json({ success: false, message: 'Wallet address is required' });
             return;
         }
-
-        const user: User = new User(WalletAddress);
-        const response = await user.increaseAdsCount();
-
+        const user = new user_1.User(WalletAddress);
+        const response = yield user.increaseAdsCount();
         res.status(response.code).json({ success: response.success, message: response.message });
-    } catch (err) {
+    }
+    catch (err) {
         next(err);
     }
-}
-
-export const getAdsAndTokenCount = async (req: Request, res: Response, next: NextFunction) => {
+});
+exports.increaseAdsCount = increaseAdsCount;
+const getAdsAndTokenCount = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { WalletAddress } = req.body;
         if (!WalletAddress) {
-            res.status(StatusCodes.BadRequest).json({ success: false, message: 'Wallet address is required' });
+            res.status(constants_1.StatusCodes.BadRequest).json({ success: false, message: 'Wallet address is required' });
             return;
         }
-
-        const user: User = new User(WalletAddress);
-        const response = await user.getAdsAndTokenCount(WalletAddress);
-        
+        const user = new user_1.User(WalletAddress);
+        const response = yield user.getAdsAndTokenCount(WalletAddress);
         res.status(response.code).json({ success: response.success, data: response.data });
-    } catch (err) {
+    }
+    catch (err) {
         next(err);
     }
-}
-
-export const submitVote = async(req: Request, res: Response, next: NextFunction) => {
+});
+exports.getAdsAndTokenCount = getAdsAndTokenCount;
+const submitVote = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { WalletAddress, ProjectId, NumberOfTokensForVote, Identity } = req.body;
-
         if (!WalletAddress || !ProjectId || !NumberOfTokensForVote || !Identity) {
-            res.status(StatusCodes.BadRequest).json({ success: false, message: 'Wallet address, ProjectId, and NumberOfTokensForVote are required' });
+            res.status(constants_1.StatusCodes.BadRequest).json({ success: false, message: 'Wallet address, ProjectId, and NumberOfTokensForVote are required' });
             return;
         }
-
-        const user: User = new User(WalletAddress);
-
+        const user = new user_1.User(WalletAddress);
         // verify the identity
-        let response = await user.validateSignature(NumberOfTokensForVote, Identity);
+        let response = yield user.validateSignature(NumberOfTokensForVote, Identity);
         if (response.success === false) {
             return response;
         }
-        
         // submit vote
-        response = await user.castVote(ProjectId, NumberOfTokensForVote);
-
+        response = yield user.castVote(ProjectId, NumberOfTokensForVote);
         res.status(response.code).json({ success: response.success, message: response.message });
-    } catch (err) {
+    }
+    catch (err) {
         next(err);
     }
-}
-
-export const requestTokenTransfer = async(req: Request, res: Response, next: NextFunction) => {
-
+});
+exports.submitVote = submitVote;
+const requestTokenTransfer = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { WalletAddress } = req.body;
-
         if (!WalletAddress) {
-            res.status(StatusCodes.BadRequest).json({ success: false, message: 'Wallet address is required' });
+            res.status(constants_1.StatusCodes.BadRequest).json({ success: false, message: 'Wallet address is required' });
             return;
         }
-        
-        const user: User = new User(WalletAddress);
-        const response = await user.requestTokenTransfer(WalletAddress);
-
+        const user = new user_1.User(WalletAddress);
+        const response = yield user.requestTokenTransfer(WalletAddress);
         res.status(response.code).json({ success: response.success, message: response.message });
-    } catch (err) {
+    }
+    catch (err) {
         next(err);
     }
-}
-
+});
+exports.requestTokenTransfer = requestTokenTransfer;
 /*
 
 export const getCurrentPoll = async(req: Request, res: Response, next: NextFunction) => {
@@ -174,4 +170,5 @@ export const yieldKolTokens = async(req: Request, res: Response, next: NextFunct
     }
 }
 
-*/
+*/ 
+//# sourceMappingURL=user.js.map

@@ -12,6 +12,7 @@ export async function addNewProject(project: Project): Promise<CustomResponse> {
             chainId: project.chainId,
             projectId: project.projectId,
             name: project.name,
+            amountRequired: project.amountRequired,
             cardImage: project.cardImage!,
             tagLine: project.tagLine,
             organizationName: project.organizationName,
@@ -46,6 +47,7 @@ export async function updateProject(project: Project): Promise<CustomResponse> {
     const info = await prisma.projects.update({
         data: {
             name: project.name,
+            amountRequired: project.amountRequired,
             // chainId: project.chainId, // modification not allowed
             cardImage: project.cardImage!,
             tagLine: project.tagLine,
@@ -102,6 +104,7 @@ export async function getProject(id: number): Promise<CustomResponse> {
         id: projectInfo.id,
         projectId: projectInfo.projectId,
         name: projectInfo.name,
+        amountRequired: projectInfo.amountRequired,
         chainId: projectInfo.chainId,
         cardImage: projectInfo.cardImage,
         tagLine: projectInfo.tagLine,
@@ -152,6 +155,7 @@ export async function getProjects(pollId: number, projectIds: number[], voteCoun
             id: project.id,
             projectId: project.projectId,
             name: project.name,
+            amountRequired: project.amountRequired,
             chainId: project.chainId,
             cardImage: project.cardImage,
             tagLine: project.tagLine,
